@@ -51,18 +51,13 @@ namespace Osmium.PluginEngine
 
         protected IEnumerable<Type> FindAssignableTypes(Assembly assembly)
         {
-            //Next we'll loop through all the Types found in the assembly
             foreach (var aType in assembly.GetTypes())
             {
-                if (aType.GetTypeInfo().IsPublic)
-                { //Only look at public types
-                    if (!aType.GetTypeInfo().IsAbstract)
-                    {  //Only look at non-abstract types
-                       //Gets a type object of the interface we need the plugins to match
-                       //Type typeInterface = pluginType.GetInterface("IPlatinumPlugin", true);
+                if (aType.GetTypeInfo().IsPublic) // only look at public types
+                {
+                    if (!aType.GetTypeInfo().IsAbstract) // only look at non-abstract types
+                    {
                         var containsInterface = typeof(TPlugin).GetTypeInfo().IsAssignableFrom(aType);
-                        //Make sure the interface we want to use actually exists
-                        //if (typeInterface != null)
                         if (containsInterface)
                         {
                             yield return aType;
@@ -80,14 +75,10 @@ namespace Osmium.PluginEngine
         public IEnumerable<TPlugin> LoadFrom(Assembly assembly)
         {
             var assemblyPlugins = new List<TPlugin>();
-            //Get the type that can be assigned to the target interface
             foreach (var pluginType in FindAssignableTypes(assembly))
             {
-                //Create a new available plugin since the type implements the IPlatinumPlugin interface
-
                 var pluginInstance = (TPlugin)Activator.CreateInstance(pluginType);
 
-                // Add the newly loaded plugin to the plugin collection
                 assemblyPlugins.Add(pluginInstance);
             }
             loadedPlugins.AddRange(assemblyPlugins);
