@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
+    <Authors>Nihal Talur (@0xFireball)</Authors>
+    <Company>IridiumIon Software</Company>
+    <Description>Osmium PluginEngine</Description>
+    <Copyright>Copyright (C) 2017 Nihal Talur (0xFireball), IridiumIon Software. All Rights Reserved.</Copyright>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
