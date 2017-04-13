@@ -1,4 +1,7 @@
-﻿namespace Osmium.PluginEngine.Tests.Types
+﻿using CookieIoC;
+using System;
+
+namespace Osmium.PluginEngine.Tests.Types
 {
     internal class MultiplyingPlugin : ITestPlugin
     {
@@ -8,6 +11,11 @@
         }
 
         public int Factor { get; }
+
+        public void BeforeActivation(CookieJar container)
+        {
+            throw new NotImplementedException();
+        }
 
         public int DoFoo(int a, int b)
         {
