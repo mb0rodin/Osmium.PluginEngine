@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Osmium.PluginEngine
 {
@@ -8,6 +10,8 @@ namespace Osmium.PluginEngine
         private List<TPlugin> loadedPlugins = new List<TPlugin>();
 
         public IEnumerable<TPlugin> Plugins => loadedPlugins;
+
+        public int PluginCount => loadedPlugins.Count;
 
         /// <summary>
         /// Load a plugin class directly
@@ -18,23 +22,50 @@ namespace Osmium.PluginEngine
             loadedPlugins.Add(plugin);
         }
 
-        protected IEnumerable<Type> FindAssignableTypes(Assembly pluginAssembly)
+        public void LoadMany(params TPlugin[] plugins)
+        {
+            foreach (var plugin in plugins)
+            {
+                Load(plugin);
+            }
+        }
+
+        /// <summary>
+        /// Load a plugin from a type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public void Load<T>() where T : TPlugin
+        {
+            Load(typeof(T));
+        }
+
+        /// <summary>
+        /// Load a plugin from a type. This type must inherit from TPlugin
+        /// </summary>
+        /// <param name="t"></param>
+        public void Load(Type t)
+        {
+            var instance = (TPlugin)Activator.CreateInstance(t);
+            loadedPlugins.Add(instance);
+        }
+
+        protected IEnumerable<Type> FindAssignableTypes(Assembly assembly)
         {
             //Next we'll loop through all the Types found in the assembly
-            foreach (var pluginType in pluginAssembly.GetTypes())
+            foreach (var aType in assembly.GetTypes())
             {
-                if (pluginType.GetTypeInfo().IsPublic)
+                if (aType.GetTypeInfo().IsPublic)
                 { //Only look at public types
-                    if (!pluginType.GetTypeInfo().IsAbstract)
+                    if (!aType.GetTypeInfo().IsAbstract)
                     {  //Only look at non-abstract types
                        //Gets a type object of the interface we need the plugins to match
                        //Type typeInterface = pluginType.GetInterface("IPlatinumPlugin", true);
-                        var containsInterface = typeof(T).GetTypeInfo().IsAssignableFrom(pluginType);
+                        var containsInterface = typeof(TPlugin).GetTypeInfo().IsAssignableFrom(aType);
                         //Make sure the interface we want to use actually exists
                         //if (typeInterface != null)
                         if (containsInterface)
                         {
-                            yield return pluginType;
+                            yield return aType;
                         }
                     }
                 }
@@ -50,23 +81,14 @@ namespace Osmium.PluginEngine
         {
             var assemblyPlugins = new List<TPlugin>();
             //Get the type that can be assigned to the target interface
-            var pluginAssignableTypes = FindAssignableTypes(pluginAssembly);
-            foreach (var pluginAssignableType in pluginAssignableTypes)
+            foreach (var pluginType in FindAssignableTypes(assembly))
             {
                 //Create a new available plugin since the type implements the IPlatinumPlugin interface
-                var pluginInstance = (T)Activator.CreateInstance(pluginAssembly.GetType(pluginAssignableType.ToString()));
-                var loadedPlugin = new LoadedPlugin<T>
-                {
-                    Assembly = pluginAssembly,
-                    Instance = pluginInstance
-                };
 
-                //Call the plugin's initialize method
-                loadedPlugin.Instance.Initialize();
+                var pluginInstance = (TPlugin)Activator.CreateInstance(pluginType);
 
-                //Add the newly loaded plugin to the plugin collection
-                AvailablePlugins.Add(loadedPlugin);
-                assemblyPlugins.Add(loadedPlugin);
+                // Add the newly loaded plugin to the plugin collection
+                assemblyPlugins.Add(pluginInstance);
             }
             loadedPlugins.AddRange(assemblyPlugins);
             return assemblyPlugins;
